@@ -1,0 +1,43 @@
+services:
+  notes_postgres:
+    image: postgres:latest
+    container_name: notes_postgres
+    command: -p ${POSTGRES_PORT:?err}
+    expose:
+      - ${POSTGRES_PORT:?err}
+    ports:
+      - ${POSTGRES_PORT:?err}:${POSTGRES_PORT:?err}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME:?err}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?err}
+      - POSTGRES_DB=${POSTGRES_DATABASE:?err}
+    volumes:
+      - ./postgres_db/:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: notes_redis
+  app:
+    container_name: notes_app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    depends_on:
+      - notes_postgres
+  bot:
+    container_name: notes_bot
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    env_file:
+      - .env
+    links:
+      - redis
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
